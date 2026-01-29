@@ -1,80 +1,86 @@
-# A-Share-Sentimental-Alpha: 基于年报语义分析的 A 股收益率预测系统
-
-## 📌 项目概述
-
-本项目是一套完整的**非结构化数据量化投资方案**。系统通过自动化爬取中国 A 股上市公司年度报告（PDF），利用深度学习模型（FinBERT）提取“管理层讨论与分析（MD&A）”章节的语义特征，并结合传统财务因子，构建梯度提升决策树（XGBoost）模型预测股票次年超额收益。
-
-**核心目标**：验证年报文本中的非对称信息（情感倾向、语调变化、语言复杂性）是否能作为 Alpha 信号提供超越大盘的预测能力。
 
 ---
 
-## 🛠️ 技术架构
+# A-Share-Sentimental-Alpha: 融合深度语义特征的 A 股截面收益率预测系统
 
-系统分为五大核心流水线：
+## 📌 项目定位
 
-1. **数据采集 (Data Pipeline)**:
-* 基于 `AkShare` 获取 A 股历史成分股及财务摘要。
-* 异步并发爬虫从巨潮资讯（CNINFO）抓取数万份年度报告 PDF。
-
-
-2. **智能解析 (Smart Parser)**:
-* 结合正则表达式与 layout 分析，精准定位并提取 **MD&A（管理层讨论与分析）** 章节。
-* 处理 PDF 跨页断句、剔除表格及页眉页脚噪声。
-
-
-3. **特征工程 (Feature Engineering)**:
-* **语义特征**: 利用 `FinBERT-Chinese` 提取 768 维文本向量及情感概率分布（积极/中性/消极）。
-* **差异特征**: 计算相邻年份 Embedding 的余弦相似度（Cosine Similarity），捕捉经营策略的漂移。
-* **量化因子**: 集成多因子模型（Size, Value, Momentum, Quality）作为控制变量。
-
-
-4. **建模与训练 (Machine Learning)**:
-* **模型**: XGBoost / LightGBM。
-* **验证**: 采用 **Walk-forward Validation（滚动时序验证）**，严防“回看偏误（Look-ahead bias）”。
-
-
-5. **回测引擎 (Strategy Backtest)**:
-* 构建 **Long-Short 组合策略**。
-* 计算核心指标：Annualized Return, Sharpe Ratio, Max Drawdown, Information Ratio。
-
-
+本项目构建了一套处理 A 股年报非结构化数据的量化策略流水线。系统通过提取**管理层讨论与分析（MD&A）中的深层语义特征，结合传统基本面因子，利用 Learning to Rank (LTR) 框架预测个股在财报披露后的行业中性化超额收益（Alpha）**。
 
 ---
 
-## 📂 目录结构
+## 🛠️ 核心工业级特性
+
+### 1. 消除预见偏差 (Look-ahead Bias Prevention)
+
+* **公告日对齐 (Point-in-Time Alignment)**：严格基于每家上市公司的 **Actual Publication Date (实际披露日)** 触发信号。
+* **时序净化验证 (Purged Walk-forward Validation)**：采用滚动窗口训练模式，并在训练集与测试集之间加入 **60 天的缓冲区 (Buffer)**，确保无数据交叉污染。
+
+### 2. 特征蒸馏与降噪 (Feature Distillation)
+
+* **语义特征工程**：利用 `FinBERT-Chinese` 将 MD&A 长文本映射至语义空间。不直接使用原始 Embedding，而是提取**情感倾向得分 (Sentiment Score)**、**不确定性指数 (Uncertainty Index)** 以及 **文本相似度变化 (Contextual Volatility)**。
+* **数据脱敏与中性化**：对预测目标进行 **行业剥离 (Industry De-exposured)**，即 ，以剔除行业贝塔干扰。
+
+### 3. 稳健建模 (Robust Modeling)
+
+* **LTR 框架**：使用 `XGBoost` 的 `rank:pairwise` 目标函数进行截面排序优化，提升 Top-K 标的选取的稳健性。
+* **幸存者偏差控制**：样本池包含历史已退市公司，确保回测结果符合真实交易环境。
+
+---
+
+## 📂 系统架构
 
 ```text
 ├── src/
-│   ├── crawler/          # 异步爬虫模块
-│   ├── parser/           # PDF解析与MD&A定位逻辑
-│   ├── features/         # 文本向量化与因子对齐
-│   ├── models/           # 训练脚本与超参数优化(Optuna)
-│   └── backtest/         # 净值计算与可视化
-├── configs/              # 策略参数配置文件
-├── notebooks/            # 特征探索性分析(EDA)
-└── requirements.txt      # 环境依赖
+│   ├── data_engine/      # 异步爬虫、公告日对齐、行情对齐
+│   ├── smart_parser/     # 结构化 PDF 解析与 MD&A 智能提取
+│   ├── features/         # FinBERT 语义蒸馏、Barra 风格因子计算
+│   ├── learning/         # XGBoost Ranker 训练、Optuna 贝叶斯搜索
+│   └── backtest/         # 考虑交易摩擦的 Alpha 收益回测
+├── configs/              # 行业分类映射与模型超参
+└── research/             # 特征重要性与 SHAP 可解释性分析
 
 ```
 
 ---
 
-## 🚀 核心亮点 (Key Features)
+## 🚀 核心技术栈
 
-* **金融级语义理解**：弃用简单的词频统计（TF-IDF），采用针对中文金融语境微调的 **FinBERT** 模型，能识别“业绩承压”、“稳中向好”等短语背后的深层情感。
-* **鲁棒的解析方案**：针对 A 股年报排版多变的痛点，开发了基于锚点定位的章节提取算法， MD&A 提取准确率达 90%+。
-* **端到端 Pipeline**：实现从原始 PDF 下载到回测报告生成的全自动化链路。
-* **可解释性分析**：引入 **SHAP (SHapley Additive exPlanations)** 值，分析哪些文本关键词对股价预测起到了决定性作用。
-
----
-
-## 📊 预期产出
-
-* **因子有效性分析**：文本特征与收益率的相关性热力图。
-* **回测净值曲线**：模型策略 vs 沪深300 指数的收益对比图。
-* **特征贡献排行**：展示模型中最具影响力的财务因子与文本因子。
+| 模块 | 核心技术 | 解决痛点 |
+| --- | --- | --- |
+| **PDF Parsing** | `MinerU` / `Marker` | 解决表格噪音与跨页文本断裂 |
+| **NLP Engine** | `FinBERT-Chinese` | 捕捉金融语境下的微弱情感信号 |
+| **Ensemble** | `XGBoost` (LambdaMART) | 捕捉财务数据与语义特征的非线性交互 |
+| **Strategy** | `VectorBT` / `Backtrader` | 计算 Sharpe, Sortino, Information Ratio |
 
 ---
 
-## 📝 免责声明
+## 🏗️ 快速开始
 
-本项目仅用于学术研究与技术演示，不构成任何投资建议。股市有风险，入市需谨慎。
+1. **环境配置**：
+```bash
+pip install -r requirements.txt
+
+```
+
+
+2. **启动端到端 Pipeline**：
+```bash
+python main_pipeline.py --mode full --start_year 2018 --industry_neutral True
+
+```
+
+
+
+---
+
+## 📊 实验产出
+
+* **特征重要性分布**：展示语义特征（如“不确定性”）对超额收益的解释力度。
+* **Long-Short 净值曲线**：展示相对于中证 800 指数的超额收益及最大回撤控制。
+
+---
+
+**免责声明**：本项目仅供学术研究使用。
+
+---
