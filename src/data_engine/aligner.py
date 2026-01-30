@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore", message=".*fillna with 'method' is deprecated.
 START_YEAR = 2021
 END_YEAR = 2024
 HOLDING_PERIOD = 60         # T+60 trading days
-MAX_WORKERS = 6             # Maintain low concurrency to avoid IP ban
+MAX_WORKERS = 2             # Maintain low concurrency to avoid IP ban
 OUTPUT_DIR = "data"
 FINAL_FILE = os.path.join(OUTPUT_DIR, "master_alignment_table.csv")
 # ===============================================
