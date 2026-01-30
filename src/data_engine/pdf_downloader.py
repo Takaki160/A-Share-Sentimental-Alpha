@@ -72,14 +72,14 @@ def download_single_pdf(row):
 
 def main():
     if not os.path.exists(INPUT_FILE):
-        print(f"❌ Input file not found: {INPUT_FILE}")
+        print(f"Input file not found: {INPUT_FILE}")
         return
 
-    print(f"🚀 PDF Downloader Started | Workers: {MAX_WORKERS}")
+    print(f"PDF Downloader Started | Workers: {MAX_WORKERS}")
     
     df = pd.read_csv(INPUT_FILE)
     total_tasks = len(df)
-    print(f"📂 Found {total_tasks} documents to process.")
+    print(f"Found {total_tasks} documents to process.")
 
     stats = {"success": 0, "skipped": 0, "failed": 0, "not_found": 0}
     
@@ -104,9 +104,9 @@ def main():
                 
                 pbar.update(1)
 
-    print("\n🎉 Download Complete!")
-    print(f"📊 Stats: Success: {stats['success']} | Skipped: {stats['skipped']} | Failed: {stats['failed']} | 404: {stats['not_found']}")
-    print(f"📁 Files saved to: {OUTPUT_DIR}")
+    print("Download Complete!")
+    print(f"Stats: Success: {stats['success']} | Skipped: {stats['skipped']} | Failed: {stats['failed']} | 404: {stats['not_found']}")
+    print(f"Files saved to: {OUTPUT_DIR}")
 
 if __name__ == "__main__":
     main()
