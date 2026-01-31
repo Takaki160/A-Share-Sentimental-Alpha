@@ -95,15 +95,6 @@ def get_pdf_url(symbol, disclosure_date):
 
 def normalize_stock_code(code):
     code = str(code).strip()
-    
-    if len(code) == 5:
-        return f"{code}.HK"
-    
-    if len(code) != 6:
-        return None
-
-    if code.startswith(('8', '4', '9')):
-        return f"{code}.BJ"
 
     if code.startswith('6'):
         return f"{code}.SH"
@@ -111,19 +102,21 @@ def normalize_stock_code(code):
     if code.startswith('0'):
         return f"{code}.SZ"
 
-    return None
+    return None # Only handle SZ and SH markets
 
 # ts.set_token('YOUR_TUSHARE_TOKEN')
 
 def calculate_label(symbol, disclosure_date):
     """Calculate T+1 buy and T+60 sell returns."""
+    symbol = normalize_stock_code(symbol)
+    if not symbol: return None
+
     try:
         start_dt = datetime.strptime(disclosure_date, "%Y-%m-%d")       
         fetch_start = start_dt.strftime("%Y%m%d")
         fetch_end = (start_dt + timedelta(days=150)).strftime("%Y%m%d") # Fetch wide range to ensure enough trading days
         
         # Adjust='hfq' is critical for long-term return calculation
-        symbol = normalize_stock_code(symbol)       
         df_hist = ts.pro_bar(
             ts_code=symbol, adj='hfq', start_date=fetch_start, end_date=fetch_end
         )
