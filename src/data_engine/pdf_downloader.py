@@ -9,7 +9,7 @@ from tqdm import tqdm
 # ================= Configuration =================
 INPUT_FILE = "data/master_alignment_table.csv"
 OUTPUT_DIR = "data/reports"
-MAX_WORKERS = 8             # Concurrency level
+MAX_WORKERS = 4             # Concurrency level
 MAX_RETRIES = 3             # Retry attempts per file
 TIMEOUT = 15                # Request timeout in seconds
 # ===============================================
@@ -39,15 +39,21 @@ def download_single_pdf(row):
         
         # 1. Check if file exists (Resume capability)
         if os.path.exists(filepath):
-            # Optional: Check file size > 1KB to ensure it's not a corrupted empty file
-            if os.path.getsize(filepath) > 1024:
+            # Optional: Check file size > 50KB to ensure it's not a corrupted empty file
+            if os.path.getsize(filepath) > 50 * 1024:
                 return "skipped"
+            else:
+                # Remove corrupted file
+                try:
+                    os.remove(filepath)
+                except:
+                    pass
         
         # 2. Download with Retries
         for attempt in range(MAX_RETRIES):
             try:
                 # Random sleep to prevent IP blocking
-                time.sleep(random.uniform(0.1, 0.5))
+                time.sleep(random.uniform(1.0, 2.0))
                 
                 resp = requests.get(url, headers=get_headers(), timeout=TIMEOUT, stream=True)
                 
