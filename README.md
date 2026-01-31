@@ -19,7 +19,7 @@
 ### 2. 特征蒸馏与降噪 (Feature Distillation)
 
 * **语义特征工程**：利用 `FinBERT-Chinese` 将 MD&A 长文本映射至语义空间。不直接使用原始 Embedding，而是提取**情感倾向得分 (Sentiment Score)**、**不确定性指数 (Uncertainty Index)** 以及 **文本相似度变化 (Contextual Volatility)**。
-* **数据脱敏与中性化**：对预测目标进行 **行业剥离 (Industry De-exposured)**，即 ，以剔除行业贝塔干扰。
+* **数据脱敏与中性化**：对预测目标进行 **行业剥离 (Industry De-exposured)**，即$Y = R_{stock} - R_{industry\_avg}$，以剔除行业贝塔干扰。
 
 ### 3. 稳健建模 (Robust Modeling)
 
