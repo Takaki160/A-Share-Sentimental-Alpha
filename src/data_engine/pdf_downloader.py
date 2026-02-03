@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 # ================= Configuration =================
-INPUT_FILE = "data/master_alignment_table_2023_2024.csv"
+INPUT_FILE = "data/master_alignment_table_2021_2022.csv"
 OUTPUT_DIR = "data/reports"
 MAX_WORKERS = 1             # Concurrency level
 MAX_RETRIES = 3             # Retry attempts per file
