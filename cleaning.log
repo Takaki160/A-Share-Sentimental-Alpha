@@ -1,0 +1,46 @@
+2026-02-03 16:10:29,941 - INFO - Starting cleanup process. Total records: 14301
+2026-02-03 16:10:36,859 - INFO - Removed: 600138_2021.pdf | Reason: Size too small (120.0KB)
+2026-02-03 16:10:36,949 - INFO - Removed: 600119_2021.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:36,971 - INFO - Removed: 600137_2021.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:37,098 - INFO - Removed: 600293_2021.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:37,290 - INFO - Removed: 600611_2021.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:37,306 - INFO - Removed: 600637_2021.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:37,408 - INFO - Removed: 600860_2021.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:37,442 - INFO - Removed: 600967_2021.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:37,688 - INFO - Removed: 603136_2021.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:37,925 - INFO - Removed: 603937_2021.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:37,930 - INFO - Removed: 603920_2021.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:43,404 - INFO - Removed: 600119_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:43,520 - INFO - Removed: 600323_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:43,523 - INFO - Removed: 600359_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:43,644 - INFO - Removed: 600576_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:43,654 - INFO - Removed: 600611_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:43,670 - INFO - Removed: 600098_2021.pdf | Reason: Read Error: Unexpected EOF
+2026-02-03 16:10:43,694 - INFO - Removed: 600715_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:43,747 - INFO - Removed: 600860_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:43,803 - INFO - Removed: 600981_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:43,826 - INFO - Removed: 601016_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:43,871 - INFO - Removed: 603001_2022.pdf | Reason: Size too small (289.9KB)
+2026-02-03 16:10:43,986 - INFO - Removed: 603136_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:44,057 - INFO - Removed: 603318_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:44,089 - INFO - Removed: 603408_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:44,252 - INFO - Removed: 605288_2022.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:50,422 - INFO - Removed: 600021_2023.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:50,477 - INFO - Removed: 600119_2023.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:50,664 - INFO - Removed: 600545_2023.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:50,705 - INFO - Removed: 600611_2023.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:50,720 - INFO - Removed: 600639_2023.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:50,821 - INFO - Removed: 600860_2023.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:50,945 - INFO - Removed: 601816_2023.pdf | Reason: Size too small (376.4KB)
+2026-02-03 16:10:51,013 - INFO - Removed: 601555_2023.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:51,370 - INFO - Removed: 603681_2023.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:10:58,351 - INFO - Removed: 600021_2024.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:11:00,720 - INFO - Removed: 600271_2024.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:11:02,182 - INFO - Removed: 600463_2024.pdf | Reason: Size too small (305.1KB)
+2026-02-03 16:11:03,919 - INFO - Removed: 600611_2024.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:11:06,496 - INFO - Removed: 600857_2024.pdf | Reason: Size too small (478.9KB)
+2026-02-03 16:11:06,681 - INFO - Removed: 600860_2024.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:11:09,554 - INFO - Removed: 603005_2024.pdf | Reason: Keyword '摘要' found in header
+2026-02-03 16:11:10,927 - INFO - Removed: 603111_2024.pdf | Reason: Size too small (234.1KB)
+2026-02-03 16:11:19,866 - INFO - Removed: 605288_2024.pdf | Reason: Size too small (217.8KB)
+2026-02-03 16:11:32,326 - INFO - Cleanup process finished successfully.
