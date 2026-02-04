@@ -1,0 +1,40 @@
+2026-02-04 00:51:53,258 - INFO - 🚀 Starting Feature Engineering Pipeline (Embedding + PCA)
+2026-02-04 00:51:54,512 - INFO - Hardware: NVIDIA GeForce RTX 3050 Laptop GPU | VRAM: 4.00 GB
+2026-02-04 00:51:54,512 - INFO - Loading backbone: uer/roberta-base-finetuned-jd-binary-chinese
+2026-02-04 00:51:54,797 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-04 00:51:54,815 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/uer/roberta-base-finetuned-jd-binary-chinese/133367c1beb2d5b04e6df3e7ec218a49575bc437/config.json "HTTP/1.1 200 OK"
+2026-02-04 00:51:54,863 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/uer/roberta-base-finetuned-jd-binary-chinese/133367c1beb2d5b04e6df3e7ec218a49575bc437/config.json "HTTP/1.1 200 OK"
+2026-02-04 00:51:54,975 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-04 00:51:55,032 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/uer/roberta-base-finetuned-jd-binary-chinese/133367c1beb2d5b04e6df3e7ec218a49575bc437/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-02-04 00:51:55,086 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/uer/roberta-base-finetuned-jd-binary-chinese/133367c1beb2d5b04e6df3e7ec218a49575bc437/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-02-04 00:51:55,183 - INFO - HTTP Request: GET https://huggingface.co/api/models/uer/roberta-base-finetuned-jd-binary-chinese/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-02-04 00:51:55,283 - INFO - HTTP Request: GET https://huggingface.co/api/models/uer/roberta-base-finetuned-jd-binary-chinese/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-02-04 00:51:55,376 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/vocab.txt "HTTP/1.1 307 Temporary Redirect"
+2026-02-04 00:51:55,429 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/uer/roberta-base-finetuned-jd-binary-chinese/133367c1beb2d5b04e6df3e7ec218a49575bc437/vocab.txt "HTTP/1.1 200 OK"
+2026-02-04 00:51:55,488 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/uer/roberta-base-finetuned-jd-binary-chinese/133367c1beb2d5b04e6df3e7ec218a49575bc437/vocab.txt "HTTP/1.1 200 OK"
+2026-02-04 00:51:55,601 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/tokenizer.json "HTTP/1.1 404 Not Found"
+2026-02-04 00:51:55,713 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/added_tokens.json "HTTP/1.1 404 Not Found"
+2026-02-04 00:51:55,826 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/special_tokens_map.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-04 00:51:55,875 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/uer/roberta-base-finetuned-jd-binary-chinese/133367c1beb2d5b04e6df3e7ec218a49575bc437/special_tokens_map.json "HTTP/1.1 200 OK"
+2026-02-04 00:51:55,923 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/uer/roberta-base-finetuned-jd-binary-chinese/133367c1beb2d5b04e6df3e7ec218a49575bc437/special_tokens_map.json "HTTP/1.1 200 OK"
+2026-02-04 00:51:56,020 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/chat_template.jinja "HTTP/1.1 404 Not Found"
+2026-02-04 00:51:56,121 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-04 00:51:56,145 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/uer/roberta-base-finetuned-jd-binary-chinese/133367c1beb2d5b04e6df3e7ec218a49575bc437/config.json "HTTP/1.1 200 OK"
+2026-02-04 00:51:58,864 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/model.safetensors "HTTP/1.1 404 Not Found"
+2026-02-04 00:51:58,966 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/model.safetensors.index.json "HTTP/1.1 404 Not Found"
+2026-02-04 00:51:59,065 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/pytorch_model.bin "HTTP/1.1 302 Found"
+2026-02-04 00:51:59,216 - INFO - HTTP Request: GET https://huggingface.co/api/models/uer/roberta-base-finetuned-jd-binary-chinese/xet-read-token/133367c1beb2d5b04e6df3e7ec218a49575bc437 "HTTP/1.1 200 OK"
+2026-02-04 00:52:14,890 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/main/model.safetensors "HTTP/1.1 404 Not Found"
+2026-02-04 00:52:15,001 - INFO - HTTP Request: GET https://huggingface.co/api/models/uer/roberta-base-finetuned-jd-binary-chinese "HTTP/1.1 200 OK"
+2026-02-04 00:52:15,118 - INFO - HTTP Request: GET https://huggingface.co/api/models/uer/roberta-base-finetuned-jd-binary-chinese/commits/main "HTTP/1.1 200 OK"
+2026-02-04 00:52:15,221 - INFO - HTTP Request: GET https://huggingface.co/api/models/uer/roberta-base-finetuned-jd-binary-chinese/discussions?p=0 "HTTP/1.1 200 OK"
+2026-02-04 00:52:15,324 - INFO - HTTP Request: GET https://huggingface.co/api/models/uer/roberta-base-finetuned-jd-binary-chinese/commits/refs%2Fpr%2F3 "HTTP/1.1 200 OK"
+2026-02-04 00:52:15,435 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/refs%2Fpr%2F3/model.safetensors.index.json "HTTP/1.1 404 Not Found"
+2026-02-04 00:52:15,532 - INFO - HTTP Request: HEAD https://huggingface.co/uer/roberta-base-finetuned-jd-binary-chinese/resolve/refs%2Fpr%2F3/model.safetensors "HTTP/1.1 302 Found"
+2026-02-04 00:52:15,654 - INFO - HTTP Request: GET https://huggingface.co/api/models/uer/roberta-base-finetuned-jd-binary-chinese/xet-read-token/7d325972e136def7e8382efe6002693636891852 "HTTP/1.1 200 OK"
+2026-02-04 00:52:16,781 - INFO - 📊 Target Documents: 14074
+2026-02-04 00:55:11,539 - INFO - 🧩 Stacking vectors and initializing PCA...
+2026-02-04 00:55:11,553 - INFO -    Raw Feature Matrix Shape: (14074, 768)
+2026-02-04 00:55:11,763 - INFO - ✅ PCA Completed. Cumulative Explained Variance: 99.81%
+2026-02-04 00:55:11,763 - INFO - 💾 Saving structured features...
+2026-02-04 00:55:12,763 - INFO - 🎉 Pipeline Done. Output saved to: C:\Users\User\Documents\A-Share-Sentimental-Alpha\data\features_pca_embeddings.csv
