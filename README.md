@@ -36,9 +36,9 @@
 │   ├── smart_parser/     # 结构化 PDF 解析与 MD&A 提取
 │   ├── features/         # 语义特征提取与 PCA 降维
 │   ├── learning/         # XGBoost Ranker 训练、Optuna 贝叶斯搜索
-│   └── backtest/         # 考虑交易摩擦的 Alpha 收益回测
-├── configs/              # 行业分类映射与模型超参
-└── research/             # 特征重要性与 SHAP 可解释性分析
+│   ├── backtest/         # 考虑交易摩擦的 Alpha 收益回测
+│   └── research/         # 特征重要性与 SHAP 可解释性分析
+└── configs/              # 行业分类映射与模型超参
 
 ```
 
