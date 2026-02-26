@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import warnings
-warnings.filterwarnings("ignore", message=".*fillna with 'method' is deprecated.*")
+warnings.filterwarnings("ignore")
 
 # ================= Configuration =================
 START_YEAR = 2023
