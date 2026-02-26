@@ -22,7 +22,7 @@ CONFIG = {
     
     "WORKERS": max(1, os.cpu_count() - 2),
     "MIN_CONTENT_LENGTH": 500,
-    "MIN_LINE_LENGTH": 4,
+    "MIN_LINE_LENGTH": 2, # Lowered to keep short headers like "一、"
 }
 # ===============================================
 
@@ -32,17 +32,21 @@ logging.basicConfig(
     handlers=[logging.FileHandler(CONFIG["LOG_FILE"], encoding='utf-8')]
 )
 
-def clean_text_line(text: str) -> str:
-    """Basic cleaning of extracted text lines:"""
+def clean_page_text(text: str) -> str:
+    """Basic cleaning of extracted text from a page."""
     if not text: return ""
-    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text) # Remove non-printable characters
+    # Remove non-printable control characters
+    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text) 
+    
     lines = text.split('\n')
     cleaned = []
     for line in lines:
         line = line.strip()
-        if len(line) < CONFIG["MIN_LINE_LENGTH"] or line.isdigit():
+        # Only skip extremely short junk
+        if len(line) < CONFIG["MIN_LINE_LENGTH"]:
             continue
-        if "年度报告" in line and len(line) < 30:
+        # Remove common repeating header/footers (e.g. "Annual Report")
+        if ("年度报告" in line or "半年度报告" in line) and len(line) < 40:
             continue
         cleaned.append(line)
     return "\n".join(cleaned)
@@ -73,21 +77,20 @@ def process_single_pdf(row) -> str:
             with fitz.open(pdf_path) as doc:
                 for page in doc:
                     text = page.get_text("text", sort=True)
-                    cleaned = clean_text_line(text)
+                    cleaned = clean_page_text(text)
                     if cleaned:
                         full_text_list.append(cleaned)
                         
         except Exception as e:
-            # MuPDF can throw various exceptions for corrupted PDFs, we catch them all to prevent crashing the whole process
             logging.warning(f"Corrupted PDF detected: {pdf_name} - {str(e)}")
             
-            # Move the corrupted PDF to a separate folder for manual review
             CONFIG["BROKEN_DIR"].mkdir(parents=True, exist_ok=True)
             broken_path = CONFIG["BROKEN_DIR"] / pdf_name
             try:
-                shutil.move(pdf_path, broken_path) # Move the corrupted PDF to the broken_pdfs folder
-            except:
-                pass
+                if not broken_path.exists():
+                    shutil.move(str(pdf_path), str(broken_path))
+            except Exception as move_err:
+                logging.error(f"Failed to move broken PDF {pdf_name}: {move_err}")
                 
             return "corrupted"
 

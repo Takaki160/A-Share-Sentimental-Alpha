@@ -16,26 +16,29 @@ CONFIG = {
     "OUTPUT_DIR": DATA_DIR / "mda_texts",
     "LOG_FILE": PROJECT_ROOT / "extraction.log",
     "WORKERS": max(1, os.cpu_count() - 1),
-    "MIN_CONTENT_LENGTH": 200  # Minimum characters to be considered valid MD&A
+    "MIN_CONTENT_LENGTH": 500,  # Valid MD&A should be reasonably long
+    "WARN_CONTENT_LENGTH": 2000 # Warn if content is surprisingly short for an annual report
 }
 
 # Pre-compiled Regex Patterns for Performance
-# Capture common variations of MD&A headers
 START_PATTERNS = [
     re.compile(r"^第[三四]节\s*管理层讨论与分析"),
-    re.compile(r"^董事会报告"),
+    re.compile(r"^第[三四]节\s*董事会报告"),
     re.compile(r"^经营情况讨论与分析"),
-    re.compile(r"^管理层讨论与分析")
+    re.compile(r"^管理层讨论与分析"),
+    re.compile(r"^董事会报告"),
+    re.compile(r"^业务回顾与展望") # Sometimes used as start in older reports
 ]
 
-# Capture common next sections to mark the end
+# Robust End Patterns - These are usually high-level section markers that follow MD&A
 END_PATTERNS = [
-    re.compile(r"^第[四五六]节\s*重要事项"),
-    re.compile(r"^第[四五六]节\s*公司治理"),
-    re.compile(r"^第[五六]节\s*环境"),
+    re.compile(r"^第[四五六七]节\s*重要事项"),
+    re.compile(r"^第[四五六七]节\s*股份变动及股东情况"),
+    re.compile(r"^第[四五六七]节\s*公司治理"),
+    re.compile(r"^第[四五六七]节\s*环境与社会责任"),
     re.compile(r"^重要事项"),
     re.compile(r"^公司治理"),
-    re.compile(r"^回顾与展望") # Sometimes appears in summary
+    re.compile(r"^财务报表")
 ]
 
 # Regex to detect Table of Content lines (lines ending in digits)
@@ -49,27 +52,22 @@ logging.basicConfig(
 )
 
 def is_likely_toc(line):
-    """
-    Check if a line looks like a Table of Contents entry.
-    Strategy: Check if it ends with a number (page number) or dots.
-    """
-    if len(line) > 100: # TOC lines are rarely huge
+    """Check if a line looks like a Table of Contents entry."""
+    if len(line) > 150: 
         return False
     return bool(TOC_PATTERN.search(line))
 
 def match_pattern(line, patterns):
     """Check if line matches any of the compiled regex patterns."""
     line = line.strip()
-    # Optimization: Only check short lines (headers) to save CPU
-    if len(line) > 50: 
+    # Increased limit to 100 to catch long titles with brackets/suffixes
+    if not line or len(line) > 100: 
         return False
     
     # Normalize spaces for matching
     clean_line = re.sub(r"\s+", "", line)
     
     for pattern in patterns:
-        # Match against cleaned line or original depending on regex design
-        # Here we match loose structure
         if pattern.search(line) or pattern.search(clean_line):
             return True
     return False
@@ -100,8 +98,12 @@ def extract_mda(row):
         
         # 1. Find Start Position (Skip TOC)
         for i, line in enumerate(lines):
-            # Heuristic: TOC usually resides in the first 500 lines
-            if i < 500 and is_likely_toc(line):
+            # Only match headers in the first 40% of the document to avoid false positives in appendices
+            if i > len(lines) * 0.4:
+                break
+                
+            # Heuristic: TOC usually resides in the first few hundred lines
+            if i < 800 and is_likely_toc(line):
                 continue
                 
             if match_pattern(line, START_PATTERNS):
@@ -112,17 +114,18 @@ def extract_mda(row):
             return "header_not_found"
             
         # 2. Find End Position
-        # Start searching 5 lines after start_idx to avoid immediate false stop
-        for i in range(start_idx + 5, len(lines)):
+        # Start searching 20 lines after start_idx to avoid immediate false stop
+        # Search until near the end of the file
+        for i in range(start_idx + 20, len(lines)):
             line = lines[i]
             if match_pattern(line, END_PATTERNS):
                 end_idx = i
                 break
                 
         # 3. Validation & Extraction
-        # If no end found, cap at 3000 lines from start (safety net)
+        # If no end found, cap at 5000 lines from start (increased safety net)
         if end_idx == -1:
-            end_idx = min(start_idx + 3000, len(lines))
+            end_idx = min(start_idx + 5000, len(lines))
             status = "forced_end"
         else:
             status = "success"
@@ -132,6 +135,9 @@ def extract_mda(row):
         # Filter out empty or extremely short extractions
         if len(content) < CONFIG["MIN_CONTENT_LENGTH"]:
             return "too_short"
+            
+        if len(content) < CONFIG["WARN_CONTENT_LENGTH"]:
+            logging.warning(f"Short extraction for {symbol}_{year}: {len(content)} chars. Check if truncated.")
 
         # 4. Save
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -145,7 +151,7 @@ def extract_mda(row):
         return "failed"
 
 def main():
-    print(f"Smart Parser (Regex Engine) | Workers: {CONFIG['WORKERS']}")
+    print(f"MD&A Extractor (Refined) | Workers: {CONFIG['WORKERS']}")
     CONFIG["OUTPUT_DIR"].mkdir(parents=True, exist_ok=True)
     
     if not CONFIG["INPUT_CSV"].exists():
