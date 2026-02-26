@@ -1,4 +1,3 @@
-import os
 import sys
 import re
 import logging
@@ -70,10 +69,10 @@ def get_device():
 def mean_pooling(model_output, attention_mask):
     """
     Pooling strategy to get fixed-size sentence embeddings.
-    We take the mean of the token embeddings, weighted by the attention mask to ignore padding tokens
     """
     token_embeddings = model_output.last_hidden_state # [Batch, Seq, Hidden]
-    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+    # Match the dtype of token_embeddings to avoid Half/Float mismatch
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).to(token_embeddings.dtype)
     
     sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
     sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
@@ -83,55 +82,41 @@ def mean_pooling(model_output, attention_mask):
 def process_single_file(file_path, tokenizer, model, device):
     """
     Process a single MD&A text file to generate its embedding.
-    Steps:
-    1. Read the text file with robust encoding handling.
-    2. Tokenize the entire text without truncation.
-    3. Select intelligent chunks from the head and tail of the document.
-    4. Create batch tensors for the selected chunks.
-    5. Run the model in inference mode to get chunk embeddings.
-    6. Aggregate chunk embeddings into a single document embedding.
     """
     try:
-        # 1. Read the text file with robust encoding handling (try utf-8, then fallback to gbk)
+        # 1. Read the text file with robust encoding handling
         text = ""
-        encodings = ['utf-8', 'gbk', 'gb18030']
+        # Adding utf-8-sig to handle files with BOM
+        encodings = ['utf-8', 'utf-8-sig', 'gb18030', 'gbk']
         for enc in encodings:
             try:
                 with open(file_path, 'r', encoding=enc) as f:
                     text = f.read().strip()
-                break
+                if text: break
             except UnicodeDecodeError:
                 continue
                 
-        if not text or len(text) < 50: # If text is too short, likely a read error or empty file
+        if not text or len(text) < 100: 
             return None
 
-        # 2. Tokenize the entire text without truncation (we will handle chunking manually)
+        # 2. Tokenize
         tokens = tokenizer(text, add_special_tokens=True, return_tensors='pt', verbose=False)
-        input_ids_all = tokens['input_ids'][0] # 1D Tensor
+        input_ids_all = tokens['input_ids'][0]
         
         total_tokens = len(input_ids_all)
         
-        # 3. Select intelligent chunks from the head and tail of the document
+        # 3. Intelligent Chunking
         chunk_size = CONFIG["MAX_LEN"]
-        overlap = CONFIG["CHUNK_OVERLAP"]
-        stride = chunk_size - overlap
+        stride = chunk_size - CONFIG["CHUNK_OVERLAP"]
+        all_starts = list(range(0, total_tokens, stride))
         
-        all_starts = list(range(0, total_tokens, stride)) # Calculate chunk start indices
-        
-        selected_starts = []
         needed_chunks = CONFIG["HEAD_CHUNKS"] + CONFIG["TAIL_CHUNKS"]
-        
         if len(all_starts) <= needed_chunks:
-            selected_starts = all_starts # If document is very short, just take all chunks (with overlap) without strict head/tail separation
+            selected_starts = all_starts
         else:
-            selected_starts.extend(all_starts[:CONFIG["HEAD_CHUNKS"]]) # First M chunks from the head
-            tail_starts = all_starts[-CONFIG["TAIL_CHUNKS"]:] # Last M chunks from the tail
-            for s in tail_starts:
-                if s not in selected_starts:
-                    selected_starts.append(s)
+            selected_starts = all_starts[:CONFIG["HEAD_CHUNKS"]] + all_starts[-CONFIG["TAIL_CHUNKS"]:]
         
-        # 4. Create batch tensors for the selected chunks (with padding if necessary)
+        # 4. Batch Preparation
         chunk_input_ids = []
         chunk_att_masks = []
         
@@ -139,30 +124,28 @@ def process_single_file(file_path, tokenizer, model, device):
             end = min(start + chunk_size, total_tokens)
             ids = input_ids_all[start:end]
             
-            # Padding
             padding_len = chunk_size - len(ids)
             if padding_len > 0:
+                mask = torch.cat([torch.ones(len(ids)), torch.zeros(padding_len)])
                 ids = torch.cat([ids, torch.zeros(padding_len, dtype=torch.long)])
-                mask = torch.cat([torch.ones(len(ids)-padding_len), torch.zeros(padding_len)])
             else:
                 mask = torch.ones(len(ids))
                 
             chunk_input_ids.append(ids)
             chunk_att_masks.append(mask)
             
-        if not chunk_input_ids:
-            return None
-
         input_ids_tensor = torch.stack(chunk_input_ids).to(device)
         att_mask_tensor = torch.stack(chunk_att_masks).to(device)
         
-        # 5. Run the model in inference mode to get chunk embeddings
+        # 5. Inference
         with torch.no_grad():
             outputs = model(input_ids=input_ids_tensor, attention_mask=att_mask_tensor)
-            chunk_embeddings = mean_pooling(outputs, att_mask_tensor) # [Chunks, Hidden]
+            chunk_embeddings = mean_pooling(outputs, att_mask_tensor)
         
-        # 6. Aggregate chunk embeddings into a single document embedding (mean pooling across chunks)
         doc_embedding = torch.mean(chunk_embeddings, dim=0).cpu().numpy()
+        
+        # Clean up GPU memory periodically
+        del input_ids_tensor, att_mask_tensor, outputs, chunk_embeddings
         
         return doc_embedding
 
@@ -173,7 +156,7 @@ def process_single_file(file_path, tokenizer, model, device):
 # ================= Main Pipeline =================
 def main():
     device = get_device()
-    logging.info(f"🚀 Starting MD&A Embedding Pipeline on device {device}")
+    logging.info(f"Starting MD&A Embedding Pipeline on device {device}")
     
     # 1. Load the pre-trained model and tokenizer
     logging.info(f"Loading Model: {CONFIG['MODEL_NAME']}...")
@@ -184,7 +167,7 @@ def main():
     
     if CONFIG["USE_FP16"] and device.type == 'cuda':
         model.half()
-        logging.info("⚡ FP16 Precision Enabled (Memory Usage Halved)")
+        logging.info("FP16 Precision Enabled (Memory Usage Halved)")
 
     # 2. Find all text files in the input directory (including subfolders)
     files = list(CONFIG["INPUT_DIR"].rglob("*.txt")) # Recursively find all .txt files
@@ -270,7 +253,7 @@ def main():
     df_final = pd.concat([df_meta.reset_index(drop=True), df_pca], axis=1) # Combine metadata and PCA features into one DataFrame
     
     df_final.to_csv(CONFIG["OUTPUT_CSV"], index=False)
-    logging.info(f"✅ Features saved to {CONFIG['OUTPUT_CSV']}")
+    logging.info(f"Features saved to {CONFIG['OUTPUT_CSV']}")
 
 if __name__ == "__main__":
     main()
