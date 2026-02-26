@@ -40,7 +40,6 @@ END_PATTERNS = [
 
 # Regex to detect Table of Content lines (lines ending in digits)
 TOC_PATTERN = re.compile(r"(\.{3,}|\s)\d+\s*$")
-
 # ===============================================
 
 logging.basicConfig(
@@ -178,7 +177,8 @@ def main():
                 )
                 pbar.update(1)
 
-    print("\n" + "="*40)
+    print()
+    print("="*40)
     print("✅ EXTRACTION SUMMARY")
     print(f"Success (Clean)  : {stats['success']}")
     print(f"Success (Forced) : {stats['forced_end']} (No end header found, capped)")

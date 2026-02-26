@@ -1,6 +1,7 @@
 import os
 import re
 import fitz  # PyMuPDF
+fitz.TOOLS.mupdf_display_errors(False) # Suppress MuPDF warnings about broken PDFs
 import logging
 import shutil
 import pandas as pd
@@ -16,7 +17,7 @@ CONFIG = {
     "INPUT_CSV": DATA_DIR / "clean_master.csv",
     "PDF_DIR": DATA_DIR / "reports",
     "TXT_DIR": DATA_DIR / "texts",
-    "BROKEN_DIR": DATA_DIR / "trash" / "broken_pdfs", # 新增：存放坏文件的地方
+    "BROKEN_DIR": DATA_DIR / "trash" / "broken_pdfs",
     "LOG_FILE": PROJECT_ROOT / "parsing.log",
     
     "WORKERS": max(1, os.cpu_count() - 2),
@@ -25,10 +26,6 @@ CONFIG = {
 }
 # ===============================================
 
-# 1. 屏蔽 PyMuPDF 的底层 C++ 报错输出 (关键！)
-# 这样终端就不会被 "xref error" 刷屏了
-fitz.TOOLS.mupdf_display_errors(False)
-
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -36,9 +33,9 @@ logging.basicConfig(
 )
 
 def clean_text_line(text: str) -> str:
+    """Basic cleaning of extracted text lines:"""
     if not text: return ""
-    # 去除不可见字符
-    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text)
+    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text) # Remove non-printable characters
     lines = text.split('\n')
     cleaned = []
     for line in lines:
@@ -51,6 +48,7 @@ def clean_text_line(text: str) -> str:
     return "\n".join(cleaned)
 
 def process_single_pdf(row) -> str:
+    """Process a single PDF: extract text, clean it, and save to TXT. Returns status string."""
     try:
         symbol = str(row['symbol']).zfill(6)
         year = str(row['report_year'])
@@ -71,34 +69,27 @@ def process_single_pdf(row) -> str:
 
         full_text_list = []
         
-        # ==========================================
-        # 核心修改：增加对坏文件的防御
-        # ==========================================
         try:
             with fitz.open(pdf_path) as doc:
                 for page in doc:
-                    # 如果 PDF 损坏，这里通常会抛出 RuntimeError
                     text = page.get_text("text", sort=True)
                     cleaned = clean_text_line(text)
                     if cleaned:
                         full_text_list.append(cleaned)
                         
         except Exception as e:
-            # 捕获到 PDF 损坏！
+            # MuPDF can throw various exceptions for corrupted PDFs, we catch them all to prevent crashing the whole process
             logging.warning(f"Corrupted PDF detected: {pdf_name} - {str(e)}")
             
-            # 策略：移动到坏文件目录，方便后续检查或删除
+            # Move the corrupted PDF to a separate folder for manual review
             CONFIG["BROKEN_DIR"].mkdir(parents=True, exist_ok=True)
             broken_path = CONFIG["BROKEN_DIR"] / pdf_name
             try:
-                # 必须先关闭文件句柄（with 语句已自动处理）
-                shutil.move(pdf_path, broken_path)
+                shutil.move(pdf_path, broken_path) # Move the corrupted PDF to the broken_pdfs folder
             except:
-                pass # 如果移动失败（比如文件占用），暂时忽略
+                pass
                 
-            return "corrupted" # 返回特殊状态
-            
-        # ==========================================
+            return "corrupted"
 
         final_content = "\n".join(full_text_list)
         
@@ -135,15 +126,15 @@ def main():
                 status = future.result()
                 stats[status] = stats.get(status, 0) + 1
                 
-                # 在进度条上实时显示坏文件数量
                 pbar.set_postfix(
                     ok=stats["success"], 
                     skip=stats["skipped"], 
-                    bad=stats["corrupted"] # 这里会显示坏文件数
+                    bad=stats["corrupted"] # Show corrupted count in progress bar for quick monitoring
                 )
                 pbar.update(1)
 
-    print("\n" + "="*40)
+    print()
+    print("="*40)
     print("✅ PARSING COMPLETED")
     print(f"Success    : {stats['success']}")
     print(f"Skipped    : {stats['skipped']}")
