@@ -10,12 +10,12 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # ================= Configuration =================
-START_YEAR = 2023
+START_YEAR = 2021
 END_YEAR = 2024
 HOLDING_PERIOD = 60         # T+60 trading days
 MAX_WORKERS = 2             # Maintain low concurrency to avoid IP ban
 OUTPUT_DIR = "data"
-FINAL_FILE = os.path.join(OUTPUT_DIR, "master_alignment_table_2023_2024.csv")
+FINAL_FILE = os.path.join(OUTPUT_DIR, "master_alignment_table.csv")
 # ===============================================
 
 def safe_sleep(min_sec=0.1, max_sec=1.0):
