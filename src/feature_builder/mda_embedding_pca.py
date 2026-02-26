@@ -26,24 +26,23 @@ CONFIG = {
     "OUTPUT_CSV": DATA_DIR / "features_pca_embeddings.csv",
     "LOG_FILE": LOG_DIR / "feature_engineering.log",
     
-    # --- 模型选择 ---
-    # 哈工大 RoBERTa-wwm-ext (中文金融领域表现优异)
-    "MODEL_NAME": "hfl/chinese-roberta-wwm-ext",
+    # Model Configuration
+    "MODEL_NAME": "hfl/chinese-roberta-wwm-ext", # Chinese RoBERTa-wwm-ext (Whole Word Masking)
     
-    # --- 针对 RTX 3050 Laptop 的显存优化 ---
-    "USE_FP16": True,          # 必须开启！显存占用减半
-    "BATCH_SIZE": 8,           # 3050 Laptop 4GB 显存建议设为 4-8
-    "MAX_LEN": 512,            # 模型硬限制
+    # Optimization for RTX 3050
+    "USE_FP16": True,
+    "BATCH_SIZE": 8,
+    "MAX_LEN": 512,
     
-    # --- 关键策略: Head + Tail ---
-    "HEAD_CHUNKS": 3,          # 取前 3 个切片
-    "TAIL_CHUNKS": 3,          # 取后 3 个切片
-    "CHUNK_OVERLAP": 50,       # 切片重叠长度，保持语义连贯
+    # Chunking Strategy
+    "HEAD_CHUNKS": 3,
+    "TAIL_CHUNKS": 3,
+    "CHUNK_OVERLAP": 50,
     
-    # --- PCA 设置 ---
-    "N_COMPONENTS": 80,        # 降维目标
+    # PCA Configuration
+    "N_COMPONENTS": 80,
     "RANDOM_STATE": 42,
-    "PCA_FIT_YEAR_CUTOFF": 2022 # 严禁使用此年份之后的数据训练 PCA (防泄漏)
+    "PCA_FIT_YEAR_CUTOFF": 2023 # Only use data from 2023 and earlier to prevent future data leakage
 }
 
 # ================= Setup Logging =================
@@ -57,9 +56,8 @@ logging.basicConfig(
 )
 
 # ================= Helper Functions =================
-
 def get_device():
-    """针对 RTX 显卡优先使用 CUDA"""
+    """Detect if GPU is available and return appropriate device."""
     if torch.cuda.is_available():
         device = torch.device("cuda")
         props = torch.cuda.get_device_properties(device)
@@ -71,7 +69,8 @@ def get_device():
 
 def mean_pooling(model_output, attention_mask):
     """
-    工业级 Pooling: 对所有 Token 的向量取加权平均 (排除 Padding)
+    Pooling strategy to get fixed-size sentence embeddings.
+    We take the mean of the token embeddings, weighted by the attention mask to ignore padding tokens
     """
     token_embeddings = model_output.last_hidden_state # [Batch, Seq, Hidden]
     input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
@@ -83,10 +82,17 @@ def mean_pooling(model_output, attention_mask):
 
 def process_single_file(file_path, tokenizer, model, device):
     """
-    读取单文件 -> Head+Tail 智能切片 -> 推理 -> Mean Pooling
+    Process a single MD&A text file to generate its embedding.
+    Steps:
+    1. Read the text file with robust encoding handling.
+    2. Tokenize the entire text without truncation.
+    3. Select intelligent chunks from the head and tail of the document.
+    4. Create batch tensors for the selected chunks.
+    5. Run the model in inference mode to get chunk embeddings.
+    6. Aggregate chunk embeddings into a single document embedding.
     """
     try:
-        # 1. 鲁棒的文件读取
+        # 1. Read the text file with robust encoding handling (try utf-8, then fallback to gbk)
         text = ""
         encodings = ['utf-8', 'gbk', 'gb18030']
         for enc in encodings:
@@ -97,40 +103,35 @@ def process_single_file(file_path, tokenizer, model, device):
             except UnicodeDecodeError:
                 continue
                 
-        if not text or len(text) < 50: # 忽略过短的垃圾文件
+        if not text or len(text) < 50: # If text is too short, likely a read error or empty file
             return None
 
-        # 2. Tokenize 全文 (获取 input_ids 列表)
-        # 注意：这里 truncation=False，我们要手动切片
+        # 2. Tokenize the entire text without truncation (we will handle chunking manually)
         tokens = tokenizer(text, add_special_tokens=True, return_tensors='pt', verbose=False)
         input_ids_all = tokens['input_ids'][0] # 1D Tensor
         
         total_tokens = len(input_ids_all)
         
-        # 3. 智能选择 Head + Tail 的切片索引
+        # 3. Select intelligent chunks from the head and tail of the document
         chunk_size = CONFIG["MAX_LEN"]
         overlap = CONFIG["CHUNK_OVERLAP"]
         stride = chunk_size - overlap
         
-        # 生成所有切片的起始位置
-        all_starts = list(range(0, total_tokens, stride))
+        all_starts = list(range(0, total_tokens, stride)) # Calculate chunk start indices
         
         selected_starts = []
         needed_chunks = CONFIG["HEAD_CHUNKS"] + CONFIG["TAIL_CHUNKS"]
         
         if len(all_starts) <= needed_chunks:
-            # 如果文本不够长，就全部都要
-            selected_starts = all_starts
+            selected_starts = all_starts # If document is very short, just take all chunks (with overlap) without strict head/tail separation
         else:
-            # 头部 N 个
-            selected_starts.extend(all_starts[:CONFIG["HEAD_CHUNKS"]])
-            # 尾部 M 个 (去重)
-            tail_starts = all_starts[-CONFIG["TAIL_CHUNKS"]:]
+            selected_starts.extend(all_starts[:CONFIG["HEAD_CHUNKS"]]) # First M chunks from the head
+            tail_starts = all_starts[-CONFIG["TAIL_CHUNKS"]:] # Last M chunks from the tail
             for s in tail_starts:
                 if s not in selected_starts:
                     selected_starts.append(s)
         
-        # 4. 构建 Batch Tensor
+        # 4. Create batch tensors for the selected chunks (with padding if necessary)
         chunk_input_ids = []
         chunk_att_masks = []
         
@@ -151,18 +152,16 @@ def process_single_file(file_path, tokenizer, model, device):
             
         if not chunk_input_ids:
             return None
-            
-        # 堆叠成 Batch [Batch_Size, Seq_Len]
-        # RTX 3050 显存优化: 如果 chunks 数量超过配置的 BATCH_SIZE，可以再分批，但这里 Head+Tail 通常只有 4 个，很安全
+
         input_ids_tensor = torch.stack(chunk_input_ids).to(device)
         att_mask_tensor = torch.stack(chunk_att_masks).to(device)
         
-        # 5. 模型推理 (开启混合精度)
+        # 5. Run the model in inference mode to get chunk embeddings
         with torch.no_grad():
             outputs = model(input_ids=input_ids_tensor, attention_mask=att_mask_tensor)
             chunk_embeddings = mean_pooling(outputs, att_mask_tensor) # [Chunks, Hidden]
         
-        # 6. 聚合文档向量 (对所有切片取平均)
+        # 6. Aggregate chunk embeddings into a single document embedding (mean pooling across chunks)
         doc_embedding = torch.mean(chunk_embeddings, dim=0).cpu().numpy()
         
         return doc_embedding
@@ -172,13 +171,11 @@ def process_single_file(file_path, tokenizer, model, device):
         return None
 
 # ================= Main Pipeline =================
-
 def main():
-    logging.info("🚀 Starting Industrial MD&A Embedding Pipeline (RTX 3050 Optimized)")
-    
     device = get_device()
+    logging.info(f"🚀 Starting MD&A Embedding Pipeline on device {device}")
     
-    # 1. 加载模型
+    # 1. Load the pre-trained model and tokenizer
     logging.info(f"Loading Model: {CONFIG['MODEL_NAME']}...")
     tokenizer = AutoTokenizer.from_pretrained(CONFIG['MODEL_NAME'])
     model = AutoModel.from_pretrained(CONFIG['MODEL_NAME'])
@@ -189,9 +186,8 @@ def main():
         model.half()
         logging.info("⚡ FP16 Precision Enabled (Memory Usage Halved)")
 
-    # 2. 扫描文件 (核心修改：使用 rglob 递归搜索子文件夹)
-    # rglob = recursive glob，会查找所有子目录下的 txt
-    files = list(CONFIG["INPUT_DIR"].rglob("*.txt"))
+    # 2. Find all text files in the input directory (including subfolders)
+    files = list(CONFIG["INPUT_DIR"].rglob("*.txt")) # Recursively find all .txt files
     
     if not files:
         logging.error(f"No .txt files found in {CONFIG['INPUT_DIR']} or its subfolders!")
@@ -199,43 +195,34 @@ def main():
         return
     logging.info(f"Found {len(files)} files to process.")
 
-    # 3. 批量生成 Embeddings
+    # 3. Process each file to generate embeddings, while collecting metadata
     embeddings = []
     metadata = []
     
-    # 正则1: 标准格式 (文件名包含股票和年份) e.g., "000001_2022.txt"
-    pattern_standard = re.compile(r"(\d{6}).*?(\d{4})")
-    # 正则2: 仅股票代码 (年份从文件夹取) e.g., "2022/000001.txt"
-    pattern_symbol_only = re.compile(r"(\d{6})")
+    pattern_standard = re.compile(r"(\d{6}).*?(\d{4})") # Matches "000001_2022.txt" or "2022_000001.txt" and captures code and year
+    pattern_symbol_only = re.compile(r"(\d{6})") # Matches "000001.txt" and captures code only (year will be inferred from parent folder)
     
     pbar = tqdm(files, desc="Embedding Generation")
     for file_path in pbar:
         symbol = None
         year = None
         
-        # --- 尝试解析元数据 (增强版) ---
-        # 策略 A: 尝试从文件名直接读取 "代码+年份"
         match = pattern_standard.search(file_path.name)
-        if match:
+        if match: # First try to extract symbol and year from filename
             symbol, year = match.groups()
             year = int(year)
-        else:
-            # 策略 B: 如果文件名没年份，尝试从 "父文件夹名" 读取年份
-            # 适用于结构: .../2022/000001.txt
+        else: # If that fails, try to extract symbol only and infer year from parent folder
             match_sym = pattern_symbol_only.search(file_path.name)
             if match_sym:
                 symbol = match_sym.group(1)
-                # 检查父文件夹是否是数字 (年份)
                 if file_path.parent.name.isdigit():
                     year = int(file_path.parent.name)
         
-        # 如果依然无法解析出年份或代码，跳过
         if symbol is None or year is None:
             logging.warning(f"Skipping unparseable file: {file_path}")
             continue
             
-        # 处理文件
-        emb = process_single_file(file_path, tokenizer, model, device)
+        emb = process_single_file(file_path, tokenizer, model, device) # Generate embedding for this file
         
         if emb is not None:
             embeddings.append(emb)
@@ -253,7 +240,7 @@ def main():
     df_meta = pd.DataFrame(metadata)
     logging.info(f"Embedding Generation Complete. Shape: {X_all.shape}")
 
-    # --- Step 4: PCA 降维 (严格防泄露) ---
+    # 4. Fit PCA on the training set (reports from 2023 and earlier) and transform all data
     logging.info("-" * 40)
     logging.info(f"Step 4: PCA Fit (Training strictly on Data <= {CONFIG['PCA_FIT_YEAR_CUTOFF']})")
     
@@ -263,8 +250,7 @@ def main():
     n_train = len(X_train)
     logging.info(f"PCA Training Samples: {n_train} (Total: {len(X_all)})")
     
-    # 放宽一点限制，防止样本略少报错 (只要大于 Components 数量即可)
-    if n_train < CONFIG["N_COMPONENTS"]:
+    if n_train < CONFIG["N_COMPONENTS"]: # PCA components cannot exceed number of samples
         logging.error(f"FATAL: PCA training samples ({n_train}) too small for {CONFIG['N_COMPONENTS']} components!")
         logging.error("Check if your data contains years <= 2022.")
         return
@@ -275,15 +261,13 @@ def main():
     explained_ratio = np.sum(pca.explained_variance_ratio_)
     logging.info(f"PCA Variance Explained: {explained_ratio:.2%}")
 
-    # 转换全量数据
-    X_pca = pca.transform(X_all)
+    X_pca = pca.transform(X_all) # Transform all data (including future years) to prevent data leakage in training phase, but PCA is only fit on past data
     
-    # --- Step 5: 保存结果 ---
+    # 5. Save the final features (PCA components) along with metadata to a CSV file
     pca_cols = [f"pca_{i+1}" for i in range(CONFIG["N_COMPONENTS"])]
     df_pca = pd.DataFrame(X_pca, columns=pca_cols)
     
-    # 合并 Meta 和 PCA 特征
-    df_final = pd.concat([df_meta.reset_index(drop=True), df_pca], axis=1)
+    df_final = pd.concat([df_meta.reset_index(drop=True), df_pca], axis=1) # Combine metadata and PCA features into one DataFrame
     
     df_final.to_csv(CONFIG["OUTPUT_CSV"], index=False)
     logging.info(f"✅ Features saved to {CONFIG['OUTPUT_CSV']}")

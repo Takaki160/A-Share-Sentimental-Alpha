@@ -8,27 +8,25 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 
 # ================= Configuration =================
-# 自动获取项目根目录 (A-SHARE-SENTIMENTAL-ALPHA)
-# 逻辑：当前脚本在 src/data_engine/，向上回退 2 级即为根目录
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[2] # Assumes src/data_engine/clean_data.py structure
 DATA_DIR = PROJECT_ROOT / "data"
 
 CONFIG = {
-    # 路径配置 (全自动适配)
+    # File Paths
     "INPUT_CSV": DATA_DIR / "master_alignment_table.csv",
     "OUTPUT_CSV": DATA_DIR / "clean_master.csv",
     "REPORT_DIR": DATA_DIR / "reports",
     "TRASH_DIR": DATA_DIR / "trash",
     "LOG_FILE": PROJECT_ROOT / "cleaning.log",
     
-    # 性能配置
-    "WORKERS": max(1, os.cpu_count() - 2), # 自动留出 2 个核给系统
+    # Concurrency Configuration
+    "WORKERS": max(1, os.cpu_count() - 2), # Leave some CPU free for other tasks, adjust as needed
     
-    # 业务阈值
+    # Cleaning Thresholds
     "THRESHOLDS": {
-        "MIN_BYTES": 500 * 1024,       # < 500KB: 极大概率是垃圾
-        "SAFE_BYTES": 2 * 1024 * 1024, # > 2MB: 极大概率是正文
-        "CHECK_CHARS": 600             # 检查前 600 字符 (覆盖头部标题区)
+        "MIN_BYTES": 500 * 1024,       # < 500KB: Highly likely to be summary or invalid
+        "SAFE_BYTES": 2 * 1024 * 1024, # > 2MB: Highly likely to be valid full report
+        "CHECK_CHARS": 600             # Check first 600 chars for summary keywords
     }
 }
 # ===============================================
@@ -60,13 +58,13 @@ def is_content_summary(filepath):
             if not pdf.pages:
                 return True, "Empty PDF"
             
-            # 读取第一页
+            # Extract text from the first page for keyword checking
             first_page_text = pdf.pages[0].extract_text() or ""
             header_text = first_page_text[:CONFIG["THRESHOLDS"]["CHECK_CHARS"]]
             
-            # 关键词过滤逻辑
+            # Filter out common summary keywords
             if "摘要" in header_text:
-                # 二次确认：有时正文标题包含摘要，但这里我们主要杀标题里的
+                # Double-check
                 return True, "Keyword '摘要' found in header"
             
             if "取消" in header_text and "公告" in header_text:
@@ -75,7 +73,7 @@ def is_content_summary(filepath):
             return False, "Content OK"
             
     except Exception as e:
-        # PDF 损坏或加密无法读取，视为无效
+        # If PDF cannot be opened or read, treat as invalid to be safe
         return True, f"Read Error: {str(e)}"
 
 def process_single_file(row_data):
@@ -86,7 +84,6 @@ def process_single_file(row_data):
     year = str(row_data['report_year'])
     filename = f"{symbol}_{year}.pdf"
     
-    # 构建绝对路径
     file_path = CONFIG["REPORT_DIR"] / year / filename
     trash_path = CONFIG["TRASH_DIR"] / year / filename
     
@@ -103,19 +100,19 @@ def process_single_file(row_data):
 
     file_size = file_path.stat().st_size
 
-    # 1. 快速过滤：太小 (<500KB)
+    # 1. Quick Filter: Too Small (<500KB)
     if file_size < CONFIG["THRESHOLDS"]["MIN_BYTES"]:
         result["status"] = "invalid"
         result["reason"] = f"Size too small ({file_size/1024:.1f}KB)"
         _move_to_trash(file_path, trash_path)
         return result
 
-    # 2. 快速通行：够大 (>2MB)
+    # 2. Quick Filter: Large Files (>2MB) are likely valid
     if file_size > CONFIG["THRESHOLDS"]["SAFE_BYTES"]:
         result["status"] = "valid"
         return result
 
-    # 3. 深度检查：灰度区域 (500KB - 2MB)
+    # 3. Content-Based Check for Medium-Sized Files (500KB - 2MB)
     is_summ, reason = is_content_summary(file_path)
     if is_summ:
         result["status"] = "invalid"
@@ -148,11 +145,11 @@ def main():
     valid_rows = []
     stats = {"valid": 0, "missing": 0, "invalid": 0}
     
-    # 启动多进程池
+    # Use ProcessPoolExecutor for CPU-bound tasks (PDF reading and content checking)
     with ProcessPoolExecutor(max_workers=CONFIG["WORKERS"]) as executor:
         futures = {executor.submit(process_single_file, row): row['symbol'] for _, row in df.iterrows()}
         
-        # 进度条
+        # Use tqdm to track progress
         with tqdm(total=len(df), unit="file", desc="Cleaning") as pbar:
             for future in as_completed(futures):
                 res = future.result()
@@ -162,18 +159,15 @@ def main():
                     stats["valid"] += 1
                 elif res["status"] == "missing":
                     stats["missing"] += 1
-                    # 缺失文件可以选择记下来，但不作为错误抛出
-                else: # invalid
+                else:
                     stats["invalid"] += 1
                     logging.info(f"Removed: {res['file_name']} | Reason: {res['reason']}")
                 
                 pbar.update(1)
 
-    # 保存清洗后的 CSV
     clean_df = pd.DataFrame(valid_rows)
     clean_df.to_csv(CONFIG["OUTPUT_CSV"], index=False)
     
-    # 打印最终报告
     report = f"""
     ===========================================
     ✅ CLEANUP COMPLETED

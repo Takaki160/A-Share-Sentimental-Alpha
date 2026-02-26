@@ -116,7 +116,7 @@ def calculate_label(symbol, disclosure_date):
         fetch_start = start_dt.strftime("%Y%m%d")
         fetch_end = (start_dt + timedelta(days=150)).strftime("%Y%m%d") # Fetch wide range to ensure enough trading days
         
-        # Adjust='hfq' is critical for long-term return calculation
+        # Adjust='hfq' for long-term return calculation
         df_hist = ts.pro_bar(
             ts_code=symbol, adj='hfq', start_date=fetch_start, end_date=fetch_end
         )
@@ -143,6 +143,7 @@ def calculate_label(symbol, disclosure_date):
         sell_price = float(sell_row['close'])
         sell_date = sell_row['trade_date'].strftime("%Y-%m-%d")
         
+        # Calculate T+60 Return
         ret = (sell_price - buy_price) / buy_price
         
         return {

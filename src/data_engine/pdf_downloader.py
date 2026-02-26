@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 # ================= Configuration =================
-INPUT_FILE = "data/master_alignment_table_2021_2022.csv"
+INPUT_FILE = "data/master_alignment_table.csv"
 OUTPUT_DIR = "data/reports"
 MAX_WORKERS = 1             # Concurrency level
 MAX_RETRIES = 3             # Retry attempts per file
@@ -39,7 +39,7 @@ def download_single_pdf(row):
         
         # 1. Check if file exists (Resume capability)
         if os.path.exists(filepath):
-            # Optional: Check file size > 50KB to ensure it's not a corrupted empty file
+            # Check file size > 50KB to ensure it's not a corrupted empty file
             if os.path.getsize(filepath) > 50 * 1024:
                 return "skipped"
             else:
