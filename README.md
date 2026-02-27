@@ -37,8 +37,8 @@ A-Share-Sentimental-Alpha 是一个端到端的量化研究框架，旨在挖掘
     - `mda_embedding_pca` 加载 [Chinese BERT with Whole Word Masking](https://huggingface.co/hfl/chinese-roberta-wwm-ext) 模型进行语义编码，并对生成的高维 Embedding 进行 PCA 降维。
 4.  **建模与评估 (Modeling & Backtest)**:
     - **数据集划分**: 2021-2022 (训练集), 2023 (验证集), 2024 (测试集)。
-    - **评估指标**: 采用 Rank IC, RMSE, MAE 评估模型性能。
     - **模型应用**: 线性回归`elastic_net`与非线性回归`lightgbm_model`。
+    - **评估指标**: 采用 Rank IC, RMSE, MAE 评估模型性能。
 
 ## 🏁 快速开始
 
