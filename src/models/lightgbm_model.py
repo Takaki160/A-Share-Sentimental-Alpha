@@ -31,7 +31,7 @@ CONFIG = {
         "boosting_type": "gbdt",
         "random_state": 42,
         "learning_rate": 0.05,
-        "num_leaves": 31,
+        "num_leaves": 20,
         "feature_fraction": 0.8,
         "bagging_fraction": 0.8,
         "bagging_freq": 5,
@@ -43,6 +43,17 @@ CONFIG = {
     "PREDS_OUTPUT": RESULTS_DIR / "lightgbm_preds_2024.csv",
     "SUMMARY_OUTPUT": RESULTS_DIR / "lightgbm_summary.json"
 }
+
+def cross_sectional_zscore(df, features_cols):
+    """
+    Apply cross-sectional z-score normalization per 'report_year' 
+    to ensure proper centering and scaling without data leakage.
+    """
+    df0 = df.copy()
+    df0[features_cols] = df.groupby('report_year')[features_cols].transform(
+        lambda x: (x - x.mean()) / (x.std() + 1e-10) # Add small epsilon to avoid division by zero
+    )
+    return df0
 
 def calculate_rank_ic(y_true, y_pred, groups):
     """
@@ -96,6 +107,10 @@ def main():
     val_df[CONFIG["TARGET_COL"]] = val_df.groupby('report_year')[CONFIG["TARGET_COL"]].transform(winsorize_target)
     
     features_cols = [c for c in df.columns if c.startswith('pca_')]
+
+    train_df = cross_sectional_zscore(train_df, features_cols)
+    val_df = cross_sectional_zscore(val_df, features_cols)
+    test_df = cross_sectional_zscore(test_df, features_cols)
     
     X_train, y_train = train_df[features_cols], train_df[CONFIG["TARGET_COL"]]
     X_val, y_val     = val_df[features_cols], val_df[CONFIG["TARGET_COL"]]
