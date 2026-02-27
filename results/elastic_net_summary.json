@@ -1,11 +1,11 @@
 {
     "test_year": 2024,
     "best_alpha": 0.0001,
-    "best_l1_ratio": 0.1,
-    "val_rank_ic_mean": -0.01898838977296402,
-    "test_rank_ic_mean": 0.019626117077264867,
-    "test_mse": 0.07049504342761896,
-    "test_mae": 0.19056706850905133,
+    "best_l1_ratio": 0.3,
+    "val_rank_ic_mean": -0.01895134497503949,
+    "test_rank_ic_mean": 0.051577774705111386,
+    "test_mse": 0.06016519748036623,
+    "test_mae": 0.15680469705534458,
     "features_total": 80,
     "features_retained": 80
 }

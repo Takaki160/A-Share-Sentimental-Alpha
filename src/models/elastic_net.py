@@ -132,12 +132,9 @@ def main():
     print(f"Best Params (Val): {best_params} | Val Rank IC Mean: {best_ic:.6f}")
 
     # 5. Final Evaluation on Test Set (2024)
-    X_combined = pd.concat([X_train, X_val])
-    y_combined = pd.concat([y_train, y_val])
-    
-    print("Retraining final model on Train + Val data...")
+    print("Evaluating on 2024 Test Set with best hyperparameters...")
     final_model = ElasticNet(**best_params, random_state=42, max_iter=10000)
-    final_model.fit(X_combined, y_combined)
+    final_model.fit(X_train, y_train)
     
     test_preds = final_model.predict(X_test)
     test_rank_ic = calculate_rank_ic(y_test, test_preds, test_df['report_year']) # Pass grouping variable

@@ -57,7 +57,7 @@ def calculate_rank_ic(y_true, y_pred, groups):
     return np.mean(ic_list) if ic_list else -1.0
 
 def main():
-    print("--- LightGBM Sentimental Alpha Pipeline ---")
+    print("--- LightGBM Pipeline ---")
     
     # 1. Load Data
     if not CONFIG["MASTER_CSV"].exists() or not CONFIG["FEATURES_CSV"].exists():
@@ -103,12 +103,12 @@ def main():
     
     print(f"Data Split: Train({CONFIG['TRAIN_YEARS']}), Val({CONFIG['VAL_YEAR']}), Test({CONFIG['TEST_YEAR']})")
 
-    # 4. Train LightGBM to find optimal early stopping iteration on Val set (2023)
+    # 4. Train LightGBM with Early Stopping on Validation Set
     train_data = lgb.Dataset(X_train, label=y_train)
     val_data = lgb.Dataset(X_val, label=y_val, reference=train_data)
     
-    print("Finding best iteration with Early Stopping on Val...")
-    model_cv = lgb.train(
+    print("Searching for best iteration on Validation Set (Early Stopping)...")
+    model = lgb.train(
         CONFIG["LGB_PARAMS"],
         train_data,
         num_boost_round=1000,
@@ -120,22 +120,9 @@ def main():
         ]
     )
 
-    best_iters = model_cv.best_iteration
-    print(f"Optimal trees found: {best_iters}")
-
-    # 5. Final Evaluation on Test Set (2024)
-    print("Retraining final LightGBM model on Train + Val data...")
-    X_combined = pd.concat([X_train, X_val])
-    y_combined = pd.concat([y_train, y_val])
-    train_data_combined = lgb.Dataset(X_combined, label=y_combined)
-
-    final_model = lgb.train(
-        CONFIG["LGB_PARAMS"],
-        train_data_combined,
-        num_boost_round=best_iters 
-    )
-
-    test_preds = final_model.predict(X_test)
+    # 5. Out-of-Sample Evaluation (2024)
+    print("Evaluating on 2024 Test Set with best iteration...")
+    test_preds = model.predict(X_test, num_iteration=model.best_iteration)
     
     test_rank_ic = calculate_rank_ic(y_test, test_preds, test_df['report_year']) # Pass grouping variable for cross-sectional IC calculation
     test_mse = mean_squared_error(y_test, test_preds)
@@ -146,10 +133,10 @@ def main():
     
     summary = {
         "model": "LightGBM",
-        "best_iteration": model_cv.best_iteration,
+        "best_iteration": model.best_iteration,
         "test_rank_ic_mean": test_rank_ic,
         "test_mse": test_mse,
-        "val_score": model_cv.best_score['valid']['rmse'],
+        "val_score": model.best_score['valid']['rmse'],
         "features_used": len(features_cols)
     }
     with open(CONFIG["SUMMARY_OUTPUT"], 'w') as f:
@@ -161,7 +148,7 @@ def main():
     print("="*50)
     print(f"Rank IC Mean (Spearman): {test_rank_ic:.6f}")
     print(f"MSE                    : {test_mse:.6f}")
-    print(f"Best Iteration         : {model_cv.best_iteration}")
+    print(f"Best Iteration         : {model.best_iteration}")
     print(f"Summary saved to {CONFIG['SUMMARY_OUTPUT']}")
     print("="*50)
 
