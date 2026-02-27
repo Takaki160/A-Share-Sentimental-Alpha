@@ -3,7 +3,6 @@ import numpy as np
 from pathlib import Path
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import ElasticNet
-from sklearn.preprocessing import StandardScaler
 from scipy.stats import spearmanr, mstats
 import json
 import warnings
@@ -46,7 +45,7 @@ def cross_sectional_zscore(df, features_cols):
     """
     df0 = df.copy()
     df0[features_cols] = df.groupby('report_year')[features_cols].transform(
-        lambda x: (x - x.mean()) / (x.std() + 1e-10) # Add small epsilon to avoid division by zero
+        lambda x: (x - x.mean()) / x.std() if x.std() > 0 else (x - x.mean()) / 1e-10 # Add small epsilon to avoid division by zero
     )
     return df0
 
@@ -152,7 +151,7 @@ def main():
         "best_l1_ratio": best_params["l1_ratio"],
         "val_rank_ic_mean": best_ic,
         "test_rank_ic_mean": test_rank_ic,
-        "test_mse": test_mse,
+        "test_rmse": np.sqrt(test_mse),
         "test_mae": test_mae,
         "features_total": len(features_cols),
         "features_retained": int(n_nonzero)
@@ -165,7 +164,7 @@ def main():
     print(f"FINAL TEST PERFORMANCE (YEAR: {CONFIG['TEST_YEAR']})")
     print("="*50)
     print(f"Rank IC Mean (Spearman): {test_rank_ic:.6f}")
-    print(f"MSE                    : {test_mse:.6f}")
+    print(f"RMSE                    : {np.sqrt(test_mse):.6f}")
     print(f"MAE                    : {test_mae:.6f}")
     print("-" * 50)
     print(f"Model keeps {n_nonzero} / {len(features_cols)} features.")

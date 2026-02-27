@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import lightgbm as lgb
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from scipy.stats import spearmanr, mstats
 import json
 
@@ -141,6 +141,7 @@ def main():
     
     test_rank_ic = calculate_rank_ic(y_test, test_preds, test_df['report_year']) # Pass grouping variable for cross-sectional IC calculation
     test_mse = mean_squared_error(y_test, test_preds)
+    test_mae = mean_absolute_error(y_test, test_preds)
     
     # 6. Save Results
     test_df['predicted_return'] = test_preds
@@ -150,7 +151,8 @@ def main():
         "model": "LightGBM",
         "best_iteration": model.best_iteration,
         "test_rank_ic_mean": test_rank_ic,
-        "test_mse": test_mse,
+        "test_rmse": np.sqrt(test_mse),
+        "test_mae": test_mae,
         "val_score": model.best_score['valid']['rmse'],
         "features_used": len(features_cols)
     }
@@ -162,7 +164,8 @@ def main():
     print(f"LIGHTGBM TEST PERFORMANCE (YEAR: {CONFIG['TEST_YEAR']})")
     print("="*50)
     print(f"Rank IC Mean (Spearman): {test_rank_ic:.6f}")
-    print(f"MSE                    : {test_mse:.6f}")
+    print(f"RMSE                    : {np.sqrt(test_mse):.6f}")
+    print(f"MAE                    : {test_mae:.6f}")
     print(f"Best Iteration         : {model.best_iteration}")
     print(f"Summary saved to {CONFIG['SUMMARY_OUTPUT']}")
     print("="*50)

@@ -4,8 +4,8 @@
     "best_l1_ratio": 0.3,
     "val_rank_ic_mean": -0.01895134497503949,
     "test_rank_ic_mean": 0.051577774705111386,
-    "test_mse": 0.06016519748036623,
-    "test_mae": 0.15680469705534458,
+    "test_rmse": 0.24528595043422846,
+    "test_mae": 0.15680469705551123,
     "features_total": 80,
     "features_retained": 80
 }
