@@ -41,7 +41,7 @@ CONFIG = {
     # PCA Configuration
     "N_COMPONENTS": 80,
     "RANDOM_STATE": 42,
-    "PCA_FIT_YEAR_CUTOFF": 2023 # Only use data from 2023 and earlier to prevent future data leakage
+    "PCA_FIT_YEAR_CUTOFF": 2022 # Only use data from 2022 and earlier to prevent future data leakage
 }
 
 # ================= Setup Logging =================
@@ -86,7 +86,6 @@ def process_single_file(file_path, tokenizer, model, device):
     try:
         # 1. Read the text file with robust encoding handling
         text = ""
-        # Adding utf-8-sig to handle files with BOM
         encodings = ['utf-8', 'utf-8-sig', 'gb18030', 'gbk']
         for enc in encodings:
             try:
@@ -99,15 +98,14 @@ def process_single_file(file_path, tokenizer, model, device):
         if not text or len(text) < 100: 
             return None
 
-        # 2. Tokenize
-        tokens = tokenizer(text, add_special_tokens=True, return_tensors='pt', verbose=False)
-        input_ids_all = tokens['input_ids'][0]
-        
-        total_tokens = len(input_ids_all)
+        # 2. Tokenize WITHOUT special tokens first (we will add them to each chunk)
+        tokens = tokenizer(text, add_special_tokens=False, truncation=False)
+        input_ids_raw = tokens['input_ids']
+        total_tokens = len(input_ids_raw)
         
         # 3. Intelligent Chunking
-        chunk_size = CONFIG["MAX_LEN"]
-        stride = chunk_size - CONFIG["CHUNK_OVERLAP"]
+        chunk_content_size = CONFIG["MAX_LEN"] - 2 # Leave 2 spaces for [CLS] and [SEP]
+        stride = chunk_content_size - CONFIG["CHUNK_OVERLAP"]
         all_starts = list(range(0, total_tokens, stride))
         
         needed_chunks = CONFIG["HEAD_CHUNKS"] + CONFIG["TAIL_CHUNKS"]
@@ -120,22 +118,29 @@ def process_single_file(file_path, tokenizer, model, device):
         chunk_input_ids = []
         chunk_att_masks = []
         
+        cls_id = tokenizer.cls_token_id
+        sep_id = tokenizer.sep_token_id
+        pad_id = tokenizer.pad_token_id
+        
         for start in selected_starts:
-            end = min(start + chunk_size, total_tokens)
-            ids = input_ids_all[start:end]
+            end = min(start + chunk_content_size, total_tokens)
             
-            padding_len = chunk_size - len(ids)
+            chunk_ids = [cls_id] + input_ids_raw[start:end] + [sep_id] # Add [CLS] at the beginning and [SEP] at the end for EVERY chunk
+            
+            padding_len = CONFIG["MAX_LEN"] - len(chunk_ids)
+            
+            # Pad sequences to max length
             if padding_len > 0:
-                mask = torch.cat([torch.ones(len(ids)), torch.zeros(padding_len)])
-                ids = torch.cat([ids, torch.zeros(padding_len, dtype=torch.long)])
+                mask = [1] * len(chunk_ids) + [0] * padding_len
+                chunk_ids = chunk_ids + [pad_id] * padding_len
             else:
-                mask = torch.ones(len(ids))
+                mask = [1] * len(chunk_ids)
                 
-            chunk_input_ids.append(ids)
+            chunk_input_ids.append(chunk_ids)
             chunk_att_masks.append(mask)
             
-        input_ids_tensor = torch.stack(chunk_input_ids).to(device)
-        att_mask_tensor = torch.stack(chunk_att_masks).to(device)
+        input_ids_tensor = torch.tensor(chunk_input_ids, dtype=torch.long).to(device)
+        att_mask_tensor = torch.tensor(chunk_att_masks, dtype=torch.long).to(device)
         
         # 5. Inference
         with torch.no_grad():
@@ -144,9 +149,7 @@ def process_single_file(file_path, tokenizer, model, device):
         
         doc_embedding = torch.mean(chunk_embeddings, dim=0).cpu().numpy()
         
-        # Clean up GPU memory periodically
         del input_ids_tensor, att_mask_tensor, outputs, chunk_embeddings
-        
         return doc_embedding
 
     except Exception as e:

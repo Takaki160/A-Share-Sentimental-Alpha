@@ -1,21 +1,23 @@
-2026-02-26 14:31:31,793 - INFO - GPU Detected: NVIDIA GeForce RTX 3050 Laptop GPU | VRAM: 4.00 GB
-2026-02-26 14:31:31,799 - INFO - Loading Model: hfl/chinese-roberta-wwm-ext...
-2026-02-26 14:31:32,049 - INFO - HTTP Request: HEAD https://huggingface.co/hfl/chinese-roberta-wwm-ext/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-02-26 14:31:32,059 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/hfl/chinese-roberta-wwm-ext/5c58d0b8ec1d9014354d691c538661bf00bfdb44/config.json "HTTP/1.1 200 OK"
-2026-02-26 14:31:32,172 - INFO - HTTP Request: HEAD https://huggingface.co/hfl/chinese-roberta-wwm-ext/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
-2026-02-26 14:31:32,172 - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-2026-02-26 14:31:32,178 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/hfl/chinese-roberta-wwm-ext/5c58d0b8ec1d9014354d691c538661bf00bfdb44/tokenizer_config.json "HTTP/1.1 200 OK"
-2026-02-26 14:31:32,269 - INFO - HTTP Request: GET https://huggingface.co/api/models/hfl/chinese-roberta-wwm-ext/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
-2026-02-26 14:31:32,361 - INFO - HTTP Request: GET https://huggingface.co/api/models/hfl/chinese-roberta-wwm-ext/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
-2026-02-26 14:31:32,486 - INFO - HTTP Request: HEAD https://huggingface.co/hfl/chinese-roberta-wwm-ext/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-02-26 14:31:32,494 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/hfl/chinese-roberta-wwm-ext/5c58d0b8ec1d9014354d691c538661bf00bfdb44/config.json "HTTP/1.1 200 OK"
-2026-02-26 14:31:34,406 - INFO - HTTP Request: HEAD https://huggingface.co/hfl/chinese-roberta-wwm-ext/resolve/main/model.safetensors "HTTP/1.1 404 Not Found"
-2026-02-26 14:31:34,506 - INFO - HTTP Request: GET https://huggingface.co/api/models/hfl/chinese-roberta-wwm-ext "HTTP/1.1 200 OK"
-2026-02-26 14:31:34,768 - INFO - HTTP Request: GET https://huggingface.co/api/models/hfl/chinese-roberta-wwm-ext/commits/main "HTTP/1.1 200 OK"
-2026-02-26 14:31:34,872 - INFO - HTTP Request: GET https://huggingface.co/api/models/hfl/chinese-roberta-wwm-ext/discussions?p=0 "HTTP/1.1 403 Forbidden"
-2026-02-26 14:31:35,435 - INFO - Found 14086 files to process.
-2026-02-26 15:12:51,682 - INFO - Embedding Generation Complete. Shape: (14086, 768)
-2026-02-26 15:12:51,684 - INFO - ----------------------------------------
-2026-02-26 15:12:51,684 - INFO - Step 4: PCA Fit (Training strictly on Data <= 2023)
-2026-02-26 15:12:51,697 - INFO - PCA Training Samples: 10393 (Total: 14086)
-2026-02-26 15:12:51,959 - INFO - PCA Variance Explained: 85.48%
+2026-02-26 17:31:30,852 - INFO - GPU Detected: NVIDIA GeForce RTX 3050 Laptop GPU | VRAM: 4.00 GB
+2026-02-26 17:31:30,852 - INFO - Starting MD&A Embedding Pipeline on device cuda
+2026-02-26 17:31:30,852 - INFO - Loading Model: hfl/chinese-roberta-wwm-ext...
+2026-02-26 17:31:31,083 - INFO - HTTP Request: HEAD https://huggingface.co/hfl/chinese-roberta-wwm-ext/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-26 17:31:31,098 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/hfl/chinese-roberta-wwm-ext/5c58d0b8ec1d9014354d691c538661bf00bfdb44/config.json "HTTP/1.1 200 OK"
+2026-02-26 17:31:31,201 - INFO - HTTP Request: HEAD https://huggingface.co/hfl/chinese-roberta-wwm-ext/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-26 17:31:31,205 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/hfl/chinese-roberta-wwm-ext/5c58d0b8ec1d9014354d691c538661bf00bfdb44/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-02-26 17:31:31,300 - INFO - HTTP Request: GET https://huggingface.co/api/models/hfl/chinese-roberta-wwm-ext/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-02-26 17:31:31,390 - INFO - HTTP Request: GET https://huggingface.co/api/models/hfl/chinese-roberta-wwm-ext/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-02-26 17:31:31,648 - INFO - HTTP Request: HEAD https://huggingface.co/hfl/chinese-roberta-wwm-ext/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-26 17:31:31,656 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/hfl/chinese-roberta-wwm-ext/5c58d0b8ec1d9014354d691c538661bf00bfdb44/config.json "HTTP/1.1 200 OK"
+2026-02-26 17:31:32,985 - INFO - HTTP Request: HEAD https://huggingface.co/hfl/chinese-roberta-wwm-ext/resolve/main/model.safetensors "HTTP/1.1 404 Not Found"
+2026-02-26 17:31:33,081 - INFO - HTTP Request: GET https://huggingface.co/api/models/hfl/chinese-roberta-wwm-ext "HTTP/1.1 200 OK"
+2026-02-26 17:31:33,251 - INFO - HTTP Request: GET https://huggingface.co/api/models/hfl/chinese-roberta-wwm-ext/commits/main "HTTP/1.1 200 OK"
+2026-02-26 17:31:33,438 - INFO - HTTP Request: GET https://huggingface.co/api/models/hfl/chinese-roberta-wwm-ext/discussions?p=0 "HTTP/1.1 403 Forbidden"
+2026-02-26 17:31:34,684 - INFO - FP16 Precision Enabled (Memory Usage Halved)
+2026-02-26 17:31:35,093 - INFO - Found 14086 files to process.
+2026-02-26 19:27:22,712 - INFO - Embedding Generation Complete. Shape: (14086, 768)
+2026-02-26 19:27:22,712 - INFO - ----------------------------------------
+2026-02-26 19:27:22,712 - INFO - Step 4: PCA Fit (Training strictly on Data <= 2022)
+2026-02-26 19:27:22,730 - INFO - PCA Training Samples: 6743 (Total: 14086)
+2026-02-26 19:27:23,169 - INFO - PCA Variance Explained: 85.52%
+2026-02-26 19:27:24,470 - INFO - Features saved to C:\Users\User\Documents\A-Share-Sentimental-Alpha\data\features_pca_embeddings.csv

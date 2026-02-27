@@ -1,0 +1,8 @@
+{
+    "model": "LightGBM",
+    "best_iteration": 95,
+    "test_rank_ic_mean": 0.05633012616472317,
+    "test_mse": 0.04985857181905138,
+    "val_score": 0.2292760914758894,
+    "features_used": 80
+}
