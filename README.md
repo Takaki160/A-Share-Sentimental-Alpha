@@ -1,6 +1,6 @@
 ﻿# A-Share-Sentimental-Alpha
 
-A-Share-Sentimental-Alpha 是一个端到端的量化研究框架，旨在挖掘中国 A 股上市公司年度报告中“管理层讨论与分析”（MD&A）章节的文本情绪价值。通过结合预训练语言模型与机器学习模型，本项目尝试从非结构化文本中提取 Alpha 因子，并预测个股年报披露后 T+60 日收益。
+A-Share-Sentimental-Alpha 是一个端到端的量化研究框架，旨在挖掘中国 A 股上市公司年度报告中管理层讨论与分析 (MD&A) 章节的文本情绪价值。通过结合预训练语言模型与机器学习模型，本项目尝试从非结构化文本中提取 Alpha 因子，并预测个股年报披露后 T+60 日收益。
 
 ## 🚀 核心特性
 
@@ -48,7 +48,7 @@ pip install -r requirements.txt
 ```
 
 ### 2. 配置 API Token
-在 `src/data_engine/aligner.py` 中填入你的 Tushare Token。
+在 `src/data_engine/aligner.py` 中填入 Tushare Token。
 
 ### 3. 运行全流程
 ```bash
@@ -67,7 +67,7 @@ python src/models/lightgbm_model.py
 ```
 
 ## 📈 预期目标
-通过 MD&A 文本挖掘，捕捉管理层在正式公告中流露的经营态度（如积极、稳健或回避风险），从而构建具备统计学显著意义的文本 Alpha 因子。
+通过 MD&A 文本挖掘，捕捉管理层在正式公告中流露的情绪态度（如积极、稳健或回避风险），从而构建具备统计学显著意义的文本 Alpha 因子。
 
 ## ⚠️ 免责声明
 本项目仅供量化研究与交流使用，不构成任何投资建议。投资有风险，入市需谨慎。

@@ -1,0 +1,28 @@
+# Data Processing
+pandas
+numpy
+scipy
+
+# Finance Data (Chinese Market)
+akshare
+tushare
+
+# PDF Processing
+pymupdf
+pdfplumber
+
+# Networking
+requests
+
+# NLP & Deep Learning
+torch
+transformers
+tqdm
+
+# Machine Learning
+scikit-learn
+lightgbm
+
+# Visualization & Notebooks
+matplotlib
+ipykernel
